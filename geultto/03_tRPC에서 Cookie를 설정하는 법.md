@@ -3,8 +3,8 @@
 
 ## tRPC에서 Cookie를 설정하게 된 배경
 최근 회사 서비스에서 국제화(i18n) 기능을 추가하게 되었다. 
-서버 사이드에서 언어를 처리하기로 협의되었고, 이를 위해 서버 단에서 Redux를 사용하여 언어에 맞는 번역 데이터를 제공하는 방법을 선택하였다. 
-이때, 서버는 사용자가 어떤 언어를 사용하고 있는지 알아야 하기 때문에, 사용자의 언어를 판단하는 과정을 고민하게 되었다.
+서버 사이드에서 언어를 처리하기로 협의가 이뤄졌고, 이를 위해 서버 단에서 Redux를 사용하여 언어에 맞는 번역 데이터를 제공하는 방법을 선택하였다. 
+이때, 서버는 사용자가 어떤 언어를 사용하고 있는지 알아야 하므로, 사용자의 언어를 판단하는 과정을 고민하게 되었다.
 
 ### 사용자 언어 판단 방법
 먼저, 로그인한 유저인지 아닌지를 판단하기로 했다.
@@ -25,7 +25,7 @@ Accept-Language 헤더가 존재하지 않는다면, 기본 언어('en')를 설�
 이를 위해 현재 구성 중인 tRPC를 통해 언어를 선택하는 기능을 추가해야 한다.
 
 로그인 서비스는 Supabase를 사용하고 있기 때문에, Supabase에서 제공하는 함수를 통해 유저 정보를 가져오고, 이를 통해 언어를 설정하는 과정을 추가하였다.
-그러나 쿠키는 직접 설정해줘야 하기 때문에, 이를 위한 추가 작업이 필요했다.
+그러나 쿠키는 직접 설정해 줘야 하므로, 이를 위한 추가 작업이 필요했다.
 
 #### Cookie란?
 쿠키는 웹 서버가 클라이언트에 저장하도록 하는 작은 데이터 조각이며, 세션 관리, 사용자 선호도 저장, 트래킹 등의 목적으로 사용된다.
@@ -41,17 +41,19 @@ Accept-Language 헤더가 존재하지 않는다면, 기본 언어('en')를 설�
 
 #### Accept-Language란?
 Accept-Language는 사용자의 언어 선호를 나타내는 HTTP 헤더로, 사용자가 선호하는 언어를 서버에 알려주는 역할을 한다.
+
 ```
 Accept-Language: en-US, en;q=0.9, ko;q=0.8
 ```
-이 헤더는 사용자가 영어(en-US, en)를 가장 선호하고, 그 다음으로 한국어(ko)를 선호하지만 영어보다 우선순위가 낮다는 것을 의미한다.
+
+이 헤더는 사용자가 영어(en-US, en)를 가장 선호하고, 그다음으로 한국어(ko)를 선호하지만, 영어보다 우선순위가 낮다는 것을 의미한다.
 
 
 ## tRPC에서 Cookie를 설정하는 방법
 
 ### Context 설정
 
-쿠키를 설정하기 위해서는 tRPC의 컨텍스트(Context)에 res 객체를 포함시켜야 한다.  
+쿠키를 설정하기 위해서는 tRPC의 컨텍스트(Context)에 res 객체를 포함해야 한다.  
 이를 통해 서버에서 클라이언트로 응답을 보낼 때 Set-Cookie 헤더를 설정할 수 있다.
 
 ```ts
@@ -78,11 +80,11 @@ export async function createContext(opts: trpcNext.CreateNextContextOptions): Pr
 ```
 
 ### tRPC Client 설정
-tRPC Client에서는 기본적으로 쿠키를 설정하기 위해 `credentials: 'include'` 옵션을 추가해줘야 한다.  
-사실 여기 부분에서 조금 많이 고민을 했던 부분이 있다.
+tRPC Client에서는 기본적으로 쿠키를 설정하기 위해 `credentials: 'include'` 옵션을 추가해 줘야 한다.  
+사실 여기 부분에서 조금 많이 고민했던 부분이 있다.
 
 tRPC의 문서를 찾아보게 되면, 두 가지 설정 방법이 존재하는 것을 알 수 있다.  
-둘 모두 httpBatchLink를 사용하는 방법이지만, 차이점이 있다.  
+둘 다 httpBatchLink를 사용하는 방법이지만, 차이점이 있다.  
 먼저, httpBatchLink Options에 무엇이 있는지 확인해보자.
 
 ```ts
@@ -135,8 +137,9 @@ export const trpcVanilla = createTRPCClient<AppRouter>({
 })
 ```
 document.cookie를 통해 넘어온 쿠키들을 모두 유지하고, 새롭게 설정된 쿠키를 추가할 수 있다.  
-하지만 HttpOnly 쿠키에 접근할 수 없다.
-만약, 고정된 쿠키를 설정하려면 아래와 같은 방법을 사용할 수 있다.
+하지만 HttpOnly 쿠키에 접근할 수 없다.  
+
+만약, 고정된 쿠키를 설정하려면 아래와 같은 방법을 사용할 수 있다.  
 
 ```ts
 headers: {
@@ -144,7 +147,7 @@ headers: {
 },
 ```
 
-하지만 이 방법은 보안상의 이유로 권장되지 않는다.
+하지만, 이 방법은 보안상의 이유로 권장되지 않으며, Procedure에서 설정한 쿠키가 무시된다.
 document.cookie로는 HttpOnly 쿠키에 접근할 수 없고, 클라이언트 측에서 Cookie 헤더를 수동으로 설정하는 것은 브라우저의 보안 정책에 의해 제한될 수 있다.
 
 
@@ -170,7 +173,7 @@ export const trpcVanilla = createTRPCClient<AppRouter>({
 credentials: 'include'를 설정하면 브라우저가 쿠키를 자동으로 요청에 포함한다. 
 이는 HttpOnly 쿠키도 포함되므로 인증과 세션 관리에 필요한 모든 쿠키를 전송할 수 있다.
 
-credentials을 설정하지 않을 경우 기본 값은 `same-origin`이다.  
+credentials을 설정하지 않을 경우 기본값은 `same-origin`이다.  
 따라서 동일 출처에만 동작한다면 따로 설정하지 않아도 된다.
 
 `include`를 사용하면 동일 출처(same-origin)뿐만 아니라 교차 출처(cross-origin) 요청에서도 쿠키가 포함된다.
@@ -183,14 +186,16 @@ credentials을 설정하지 않을 경우 기본 값은 `same-origin`이다.
 
 쉽게 말해, 우리가 credentials: 'include'를 사용하는 것은 마치 부모님께 중요한 일을 맡기는 것과 같다.
 
-아이에게 복잡하고 위험한 일을 직접 시키면 실수나 사고가 날 수 있다. 대신에 부모님께서 그 일을 처리해 주시면 더 안전하고 효율적이다. 마찬가지로, 브라우저에게 쿠키 관리와 보안을 맡기면 우리가 직접 복잡한 보안 사항을 처리하지 않아도 안전하게 동작할 수 있다.
+아이(개발자)에게 복잡하고 위험한 일을 직접 시키면 실수나 사고가 날 수 있다. 대신에 부모님께서 그 일을 처리해 주시면 더 안전하고 효율적이다.  
+마찬가지로, 브라우저에게 쿠키 관리와 보안을 맡기면 우리가 직접 복잡한 보안 사항을 처리하지 않아도 안전하게 동작할 수 있다.
 
-credentials: 'include'를 사용하면 브라우저는 HttpOnly 쿠키를 포함하여 모든 중요한 쿠키를 자동으로 요청에 포함시키고, 보안 정책을 준수하며 쿠키를 안전하게 전송한다.
+credentials: 'include'를 사용하면 브라우저는 HttpOnly 쿠키를 포함하여 모든 중요한 쿠키를 자동으로 요청에 포함하고, 보안 정책을 준수하며 쿠키를 안전하게 전송한다.
 document.cookie를 통한 수동 설정을 하게 되면, 클라이언트 측 스크립트는 HttpOnly 쿠키에 접근할 수 없다. 즉, 중요한 쿠키를 직접 만질 수 없다. 
 수동 설정이므로, 브라우저의 혜택을 받을 수 없게 된다.
 
+그래서 `fetch` 옵션을 사용하는 것을 권장한다.
 
-### tRPC Procedure에서 Cookie 설정
+### 마지막, tRPC Procedure에서 Cookie 설정
 ```ts
 const userRouter = router({
   setLanguage: protectedProcedure
@@ -198,7 +203,7 @@ const userRouter = router({
     .mutation(async ({ ctx, input }) => {
       const { res } = ctx;
       
-      // 쿠키 설정
+      // 쿠키 설정, HttpOnly 쿠키이며 1년의 기간을 설정하였다.
       res.setHeader('Set-Cookie', [
         `lang=${input.language}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=31536000`
       ]);
@@ -210,18 +215,17 @@ const userRouter = router({
 
 
 ## 결론
-쿠키를 안전하고 효과적으로 관리하기 위해서는 브라우저에게 쿠키 관리를 맡기는 것이 가장 좋다. 이를 위해 tRPC 클라이언트에서 credentials 옵션을 설정하여 브라우저가 쿠키를 자동으로 포함하도록 해야한다.
-
-또한, 서버 측에서는 응답 시 Set-Cookie 헤더를 설정하기 위해 tRPC 컨텍스트에 res 객체를 포함시켜야 한다.
-
+쿠키를 안전하고 효과적으로 관리하기 위해서는 브라우저에 쿠키 관리를 맡기는 것이 가장 좋다. 이를 위해 tRPC 클라이언트에서 credentials 옵션을 설정하여 브라우저가 쿠키를 자동으로 포함하도록 해야 한다.  
+또한, 서버 측에서는 응답 시 Set-Cookie 헤더를 설정하기 위해 tRPC 컨텍스트에 res 객체를 포함시켜야 한다.  
 document.cookie를 사용하여 쿠키를 수동으로 설정하는 것은 보안상의 이유로 피해야 한다.
 
 # 출처
 https://trpc.io/docs/server/context  
 https://trpc.io/docs/server/middleware  
-https://developer.mozilla.org/en-US/docs/Web/API/Document/cookie
 
+https://developer.mozilla.org/en-US/docs/Web/API/Document/cookie  
 https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API/Using_Fetch  
 https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Access-Control-Allow-Credentials
+https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Accept-Language
 
 https://cheatsheetseries.owasp.org/cheatsheets/Session_Management_Cheat_Sheet.html
